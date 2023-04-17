@@ -82,8 +82,8 @@ class YaDiskUploader:
 if __name__ == '__main__':
     ya = YaDiskUploader(token=TOKEN)
     vk_user = VkUser(token=vk_token, version='5.131')
-    files_upload = {}
-    for filename, vk_url in tqdm(vk_user.photo_vk(325457).items()):
+    ID = input('Введите ID пользователя VK: ')
+    for filename, vk_url in tqdm(vk_user.photo_vk(ID).items()):
         disk_file_path = (f'Avatars_from_VK/{filename}')
         ya.upload_file_to_disk(disk_file_path, filename, vk_url)
         with open('all_url_load.txt', 'a') as f:
