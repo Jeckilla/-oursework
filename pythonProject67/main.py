@@ -71,7 +71,7 @@ class YaDiskUploader:
         url = self.get_upload_link(disk_file_path, vk_url)
         headers = self.get_headers()
         params = {'file_path': disk_file_path, 'url': vk_url, 'name': filename}
-        response = requests.post(href, headers=headers, params=params)
+        response = requests.post(url, headers=headers, params=params)
         if response.status_code == 201:
             print('Success')
         else:
