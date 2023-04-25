@@ -17,14 +17,14 @@ class VkUser:
 
     def photo_vk(self, ID):
         URL = 'https://api.vk.com/method/photos.get'
-        params = {
+        params_photo = {
             'owner_id': ID,
             'album_id': 'profile',
             'rev': 0,
             'extended': 1,
             'photo_sizes': 1
         }
-        res = requests.get(URL, params=params).json()
+        res = requests.get(URL, params={**self.params, **params_photo}).json()
         all_photos = res['response']['items']
         for i in all_photos:
             photos_best = {}
@@ -58,8 +58,8 @@ class YaDiskUploader:
         params = {"path": disk_file_path, "url": vk_url}
         response = requests.get(upload_url, headers=headers, params=params)
         data = response.json()
-        url = data.get('url')
-        return url
+        href = data.get('href')
+        return href
 
     def get_files_list(self):
         files_url = 'https://cloud-api.yandex.net/v1/disk/resources/files'
@@ -67,27 +67,29 @@ class YaDiskUploader:
         response = requests.get(files_url, headers=headers)
         return response.json()
 
-    def upload_file_to_disk(self, disk_file_path, filename, url):
-        url = self.get_upload_link(disk_file_path, vk_url)
+    def upload_file_to_disk(self, disk_file_path, filename, href):
+        href = self.get_upload_link(disk_file_path, vk_url)
         headers = self.get_headers()
-        params = {'file_path': disk_file_path, 'url': vk_url, 'name': filename}
-        response = requests.post(url, headers=headers, params=params)
+        params = {'file_path': disk_file_path, 'url': vk_url, 'name': filename, 'overwrite': 'True'}
+        response = requests.post(href, headers=headers, params=params)
         if response.status_code == 201:
             print('Success')
         else:
             print(response.status_code)
 
 
-
 if __name__ == '__main__':
     ya = YaDiskUploader(token=TOKEN)
     vk_user = VkUser(token=vk_token, version='5.131')
     ID = input('Введите ID пользователя VK: ')
+    y = yadisk.YaDisk(token=TOKEN)
+    print(y.mkdir('Avatars_from_VK2'))
     for filename, vk_url in tqdm(vk_user.photo_vk(ID).items()):
-        disk_file_path = (f'Avatars_from_VK/{filename}')
+        disk_file_path = (f'Avatars_from_VK2/{filename}')
         ya.upload_file_to_disk(disk_file_path, filename, vk_url)
         with open('all_url_load.txt', 'a') as f:
-            f.writelines({'filename': filename})
+            for filename in vk_user.photo_vk(ID).items():
+                f.write(f'\n {filename}')
 
 
 
