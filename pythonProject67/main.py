@@ -42,7 +42,7 @@ class VkUser:
                             'size': size
                         }
                         photos_for_upload.append(photos_best)
-                        with open(f'{folder_with_photos}/{title_jpg}', 'wb') as file:
+                        with open(f'{title_jpg}', 'wb') as file:
                             response = requests.get(url_photo)
                             file.write(response.content)
         return photos_for_upload
@@ -84,10 +84,10 @@ class YaDiskUploader:
         else:
             print(response.status_code)
 
-    def upload_file_to_disk(self, disk_file_path, folder_with_photos, filename):
+    def upload_file_to_disk(self, disk_file_path, filename):
         href = self.get_upload_link(disk_file_path=disk_file_path)
         headers = self.get_headers()
-        params = {'file_path': disk_file_path, 'path_from_download': folder_with_photos, 'name': filename, 'overwrite': 'True'}
+        params = {'file_path': disk_file_path, 'name': filename, 'overwrite': 'True'}
         response = requests.put(href, headers=headers, params=params, data=open(filename, 'rb'))
         if response.status_code == 201:
             print('Success')
@@ -99,7 +99,6 @@ if __name__ == '__main__':
     ya = YaDiskUploader(token=TOKEN)
     vk_user = VkUser(token=vk_token, version='5.131')
 
-    folder_with_photos = input('Введите название папки для сохранения фото из VK: ')
     ID = input('Введите ID пользователя VK: ')
     name_folder = input('Введите название папки для сохранения фото на Яндекс.Диск: ')
     photos = int(input('Введите количество фото, которые хотите загрузить: '))
@@ -112,7 +111,7 @@ if __name__ == '__main__':
             for j in tqdm(vk_user.photo_vk(ID)):
                 for filename, size in j.items():
                     disk_file_path = (f'{name_folder}/{filename}')
-                    ya.upload_file_to_disk(disk_file_path, folder_with_photos, filename)
+                    ya.upload_file_to_disk(disk_file_path, filename)
 
                     json_uploaded = {
                         "file_name": filename,
@@ -120,6 +119,7 @@ if __name__ == '__main__':
                     }
                     uploaded_photos.append(json_uploaded)
                     counter += 1
+                    print(j)
 
     with open('all_url_load.json', 'w') as f:
         json.dupm(uploaded_photos, f, indent=2, ensure_ascii=False)
