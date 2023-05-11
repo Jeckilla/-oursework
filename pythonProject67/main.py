@@ -6,6 +6,7 @@ import json
 from tqdm import tqdm
 
 
+
 class VkUser:
     url = 'https://api.vk.com/method/'
 
@@ -28,6 +29,7 @@ class VkUser:
         res = requests.get(URL, params={**self.params, **params_photo}).json()
         all_photos = res['response']['items']
         photos_for_upload = []
+        photos_for_upload_sort = sorted(photos_for_upload, reverse=True)
         for i in all_photos:
             for j in i['sizes']:
                 for k, t in j.items():
@@ -45,7 +47,7 @@ class VkUser:
                         with open(f'{title_jpg}', 'wb') as file:
                             response = requests.get(url_photo)
                             file.write(response.content)
-        return photos_for_upload
+        return photos_for_upload_sort
 
 
 class YaDiskUploader:
@@ -87,8 +89,8 @@ class YaDiskUploader:
     def upload_file_to_disk(self, disk_file_path, filename):
         href = self.get_upload_link(disk_file_path=disk_file_path)
         headers = self.get_headers()
-        params = {'file_path': disk_file_path, 'name': filename, 'overwrite': 'True'}
-        response = requests.put(href, headers=headers, params=params, data=open(filename, 'rb'))
+        params = {'file_path': disk_file_path, 'name': filename, 'url': url_photo, 'overwrite': 'True'}
+        response = requests.put(href, headers=headers, params=params, data=(filename))
         if response.status_code == 201:
             print('Success')
         else:
@@ -108,18 +110,15 @@ if __name__ == '__main__':
     counter = 0
     for i in range(photos + 1):
         while counter <= i:
-            for j in tqdm(vk_user.photo_vk(ID)):
-                for filename, size in j.items():
-                    disk_file_path = (f'{name_folder}/{filename}')
-                    ya.upload_file_to_disk(disk_file_path, filename)
+            for filename, url_photo in tqdm(vk_user.photo_vk(ID)):
+                disk_file_path = (f'{name_folder}/{filename}')
+                ya.upload_file_to_disk(disk_file_path, filename)
 
-                    json_uploaded = {
-                        "file_name": filename,
-                        "size": size
+                json_uploaded = {
+                    "file_name": filename,
                     }
-                    uploaded_photos.append(json_uploaded)
-                    counter += 1
-                    print(j)
+                uploaded_photos.append(json_uploaded)
+                counter += 1
 
     with open('all_url_load.json', 'w') as f:
         json.dupm(uploaded_photos, f, indent=2, ensure_ascii=False)
