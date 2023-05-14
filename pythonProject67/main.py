@@ -6,7 +6,6 @@ import json
 from tqdm import tqdm
 
 
-
 class VkUser:
     url = 'https://api.vk.com/method/'
 
@@ -28,8 +27,7 @@ class VkUser:
         }
         res = requests.get(URL, params={**self.params, **params_photo}).json()
         all_photos = res['response']['items']
-        photos_for_upload = []
-        photos_for_upload_sort = sorted(photos_for_upload, reverse=True)
+        photos_for_upload = {}
         for i in all_photos:
             for j in i['sizes']:
                 for k, t in j.items():
@@ -37,17 +35,13 @@ class VkUser:
                         url_photo = (j['url'])
                         date = str(i['date'])
                         likes = str(i['likes']['count'])
-                        size = str(j['type'])
                         title_jpg = likes + '_' + date + '.jpg'
-                        photos_best = {
-                            title_jpg: url_photo,
-                            'size': size
-                        }
-                        photos_for_upload.append(photos_best)
+                        photos_for_upload[title_jpg] = url_photo
                         with open(f'{title_jpg}', 'wb') as file:
                             response = requests.get(url_photo)
                             file.write(response.content)
-        return photos_for_upload_sort
+        photos_for_upload_sorted = dict(sorted(photos_for_upload.items(), reverse=True))
+        return photos_for_upload_sorted
 
 
 class YaDiskUploader:
@@ -107,18 +101,15 @@ if __name__ == '__main__':
 
     uploaded_photos = []
     ya.create_folder(name_folder)
-    counter = 0
     for i in range(photos + 1):
-        while counter <= i:
-            for filename, url_photo in tqdm(vk_user.photo_vk(ID)):
-                disk_file_path = (f'{name_folder}/{filename}')
-                ya.upload_file_to_disk(disk_file_path, filename)
+        for filename, url_photo in tqdm(vk_user.photo_vk(ID)):
+            disk_file_path = (f'{name_folder}/{filename}')
+            ya.upload_file_to_disk(disk_file_path, filename)
 
-                json_uploaded = {
-                    "file_name": filename,
-                    }
-                uploaded_photos.append(json_uploaded)
-                counter += 1
+            json_uploaded = {
+                "file_name": filename,
+                }
+            uploaded_photos.append(json_uploaded)
 
     with open('all_url_load.json', 'w') as f:
-        json.dupm(uploaded_photos, f, indent=2, ensure_ascii=False)
+        json.dump(uploaded_photos, f, indent=2, ensure_ascii=False)
